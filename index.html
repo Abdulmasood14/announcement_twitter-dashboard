@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Announcements & Twitter Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Announcement and Twitter Update</h1>
+                <p class="header-subtitle">Track announcements and social media updates</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Stats Cards Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Companies</div>
+                    <div class="stat-value" id="totalCompanies">0</div>
+                </div>
+                <!-- <div class="stat-card">
+                    <div class="stat-label">Holding Companies</div>
+                    <div class="stat-value" id="companiesWithData"></div>
+                </div> -->
+                <div class="stat-card">
+                    <div class="stat-label">Selected Date</div>
+                    <div class="stat-value" id="selectedDate">All Dates</div>
+                </div>
+            </div>
+
+            <!-- Content Wrapper for Grid Layout -->
+            <div class="content-wrapper">
+                <!-- Left Side - Company Cards -->
+                <div class="companies-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Holding Companies</h2>
+                        <button class="btn-reset" id="resetFilter">Show All Companies</button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <input type="text" id="searchInput" class="search-input"
+                            placeholder="🔍 Search companies by name or symbol...">
+                    </div>
+
+                    <div class="companies-grid" id="companiesGrid">
+                        <!-- Company cards will be inserted here -->
+                        <div class="loading">Loading companies...</div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Calendar -->
+                <aside class="sidebar">
+                    <div class="calendar-container">
+                        <h3 class="calendar-title"> Available Dates</h3>
+                        <div class="calendar" id="calendar">
+                            <!-- Calendar will be generated here -->
+                        </div>
+                        <div class="calendar-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot active"></span>
+                                <span>Has Data</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot"></span>
+                                <span>No Data</span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- Company Detail Modal -->
+        <div class="modal" id="companyModal">
+            <div class="modal-overlay" id="modalOverlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalCompanyName">Company Name</h2>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Category Cards (Announcement & Twitter) -->
+                    <div class="category-cards" id="categoryCards">
+                        <!-- Category cards will be inserted here -->
+                    </div>
+
+                    <!-- Detail View (Shows when category card is clicked) -->
+                    <div class="detail-view" id="detailView" style="display: none;">
+                        <button class="btn-back" id="btnBack">← Back to Categories</button>
+                        <div id="detailContent">
+                            <!-- Detailed content will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- No Data Message -->
+                    <div class="no-data" id="noDataMessage" style="display: none;">
+                        <p>No announcements or Twitter updates available for this company.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+</body>
+
+</html>
