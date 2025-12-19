@@ -338,11 +338,11 @@ function renderCompanies(filterDate = null, search = '') {
             totalCount = announcements.length + uniqueTwitterCount;
 
             if (announcements.length > 0) {
-                badges += `<span class="badge badge-announcement">📢 ${announcements.length}</span>`;
+                badges += `<span class="badge badge-announcement"> ${announcements.length}</span>`;
             }
 
             if (uniqueTwitterCount > 0) {
-                badges += `<span class="badge badge-twitter">🐦 ${uniqueTwitterCount}</span>`;
+                badges += `<span class="badge badge-twitter"> ${uniqueTwitterCount}</span>`;
             }
 
             if (totalCount > 0) {
@@ -459,7 +459,7 @@ function showCompanyModal(symbol) {
     if (announcements.length > 0) {
         cardsHTML += `
             <div class="category-card announcement" data-category="announcements">
-                <div class="category-icon">📢</div>
+                <div class="category-icon"></div>
                 <div class="category-title">Announcements</div>
                 <div class="category-count">${announcements.length} ${announcements.length === 1 ? 'item' : 'items'}</div>
             </div>
@@ -486,7 +486,7 @@ function showCompanyModal(symbol) {
 
         cardsHTML += `
             <div class="category-card twitter" data-category="twitter">
-                <div class="category-icon">🐦</div>
+                <div class="category-icon"></div>
                 <div class="category-title">Twitter Updates</div>
                 <div class="category-count">${uniqueCount} ${uniqueCount === 1 ? 'tweet' : 'tweets'}</div>
             </div>
@@ -592,7 +592,7 @@ function showCategoryDetails(category) {
                     <div class="tweet-source-group" style="margin-top: ${index === 0 ? '1rem' : '0.75rem'}; padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 0.5rem; border-left: 3px solid var(--secondary-color);">
                         ${channelName ? `<div class="detail-meta" style="margin-bottom: 0.5rem;">Channel: ${channelName}</div>` : ''}
                         <div class="detail-links">
-                            ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link">🐦 View Tweet</a>` : ''}
+                            ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link"> View Tweet</a>` : ''}
                             ${sourceLinks ? sourceLinks.split('\n').filter(link => link.trim()).map(link => {
                     const cleanLink = link.trim().replace(/^-/, '').trim();
                     console.log('🔗 Link:', cleanLink);
@@ -687,7 +687,7 @@ function showCategoryDetails(category) {
                         </div>
                     ` : ''}
                     <div class="detail-links">
-                        ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link">🐦 View Tweet</a>` : ''}
+                        ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link"> View Tweet</a>` : ''}
                         ${links.map(link => {
                 const cleanLink = link.replace(/^-/, '').trim();
                 if (cleanLink && cleanLink.startsWith('http')) {
@@ -732,3 +732,4 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
