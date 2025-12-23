@@ -69,7 +69,7 @@ function parseCSVLine(line) {
 // ===== Parse CSV with Multi-line Support =====
 function parseCSV(text) {
     const lines = text.trim().split('\n');
-    const headers = parseCSVLine(lines[0]).map(h => h.trim());
+    const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/\r/g, ''));
 
     const data = [];
     let i = 1;
@@ -95,7 +95,8 @@ function parseCSV(text) {
         const row = {};
 
         headers.forEach((header, index) => {
-            row[header] = values[index] ? values[index].trim() : '';
+            // Clean all values by removing carriage returns and trimming
+            row[header] = values[index] ? values[index].trim().replace(/\r/g, '') : '';
         });
 
         data.push(row);
@@ -136,9 +137,26 @@ function processData() {
         const companyEntries = announcementsData.filter(entry => {
             const entryCompany = (entry.Company || entry.company || '').trim();
 
-            return entryCompany.toLowerCase() === companyName.toLowerCase() ||
+            // Match by symbol (exact match, case-insensitive)
+            const symbolMatch =
                 entryCompany.toLowerCase() === companySymbol.toLowerCase() ||
                 entryCompany.toUpperCase() === companySymbol.toUpperCase();
+
+            // Match by company name (contains or exact match, case-insensitive)
+            const nameMatch =
+                entryCompany.toLowerCase() === companyName.toLowerCase() ||
+                companyName.toLowerCase().includes(entryCompany.toLowerCase()) ||
+                entryCompany.toLowerCase().includes(companyName.toLowerCase());
+
+            // Fuzzy match: Check if entry company contains key words from holding company name
+            // e.g., "TATAMOTORS" should match "Tata Motors Ltd."
+            const entryWords = entryCompany.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const nameWords = companyName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+            const commonWords = ['ltd', 'limited', 'co', 'company', 'inc', 'corporation', 'corp'];
+            const significantWords = nameWords.filter(word => word.length > 2 && !commonWords.includes(word));
+            const fuzzyMatch = significantWords.length > 0 && (significantWords.length === 1 ? entryWords.includes(significantWords[0]) : significantWords.filter(word => entryWords.includes(word)).length >= Math.min(2, significantWords.length));
+
+            return symbolMatch || nameMatch || fuzzyMatch;
         });
 
         if (companyEntries.length > 0) {
@@ -732,4 +750,3 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
-
