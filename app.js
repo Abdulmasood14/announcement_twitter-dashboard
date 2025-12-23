@@ -137,26 +137,32 @@ function processData() {
         const companyEntries = announcementsData.filter(entry => {
             const entryCompany = (entry.Company || entry.company || '').trim();
 
-            // Match by symbol (exact match, case-insensitive)
+            // Match by symbol (exact match ONLY, case-insensitive)
             const symbolMatch =
-                entryCompany.toLowerCase() === companySymbol.toLowerCase() ||
-                entryCompany.toUpperCase() === companySymbol.toUpperCase();
+                entryCompany.toLowerCase() === companySymbol.toLowerCase();
 
-            // Match by company name (contains or exact match, case-insensitive)
-            const nameMatch =
-                entryCompany.toLowerCase() === companyName.toLowerCase() ||
+            // Match by company name (exact match ONLY, case-insensitive)
+            const exactNameMatch =
+                entryCompany.toLowerCase() === companyName.toLowerCase();
+
+            // Partial name match (only if entry is longer than 3 chars to avoid false matches)
+            const partialNameMatch = entryCompany.length > 3 && (
                 companyName.toLowerCase().includes(entryCompany.toLowerCase()) ||
-                entryCompany.toLowerCase().includes(companyName.toLowerCase());
+                entryCompany.toLowerCase().includes(companyName.toLowerCase())
+            );
 
             // Fuzzy match: Check if entry company contains key words from holding company name
-            // e.g., "TATAMOTORS" should match "Tata Motors Ltd."
-            const entryWords = entryCompany.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const nameWords = companyName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
-            const commonWords = ['ltd', 'limited', 'co', 'company', 'inc', 'corporation', 'corp'];
-            const significantWords = nameWords.filter(word => word.length > 2 && !commonWords.includes(word));
-            const fuzzyMatch = significantWords.length > 0 && (significantWords.length === 1 ? entryWords.includes(significantWords[0]) : significantWords.filter(word => entryWords.includes(word)).length >= Math.min(2, significantWords.length));
+            // Only apply fuzzy matching for entries longer than 3 characters
+            let fuzzyMatch = false;
+            if (entryCompany.length > 3) {
+                const entryWords = entryCompany.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const nameWords = companyName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+                const commonWords = ['ltd', 'limited', 'co', 'company', 'inc', 'corporation', 'corp'];
+                const significantWords = nameWords.filter(word => word.length > 2 && !commonWords.includes(word));
+                fuzzyMatch = significantWords.length > 0 && (significantWords.length === 1 ? entryWords.includes(significantWords[0]) : significantWords.filter(word => entryWords.includes(word)).length >= Math.min(2, significantWords.length));
+            }
 
-            return symbolMatch || nameMatch || fuzzyMatch;
+            return symbolMatch || exactNameMatch || partialNameMatch || fuzzyMatch;
         });
 
         if (companyEntries.length > 0) {
