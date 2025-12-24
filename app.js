@@ -106,6 +106,24 @@ function parseCSV(text) {
     return data;
 }
 
+// ===== Normalize Company Name for Matching =====
+function normalizeCompanyName(name) {
+    if (!name) return '';
+
+    return name
+        .toLowerCase()                          // Convert to lowercase
+        .replace(/[.,\-_()]/g, '')             // Remove punctuation: . , - _ ( )
+        .replace(/\s+/g, '')                   // Remove ALL spaces (handles compound words)
+        .trim();                                // Remove leading/trailing spaces
+}
+
+// ===== Special Company Name Mappings =====
+// Handle known mismatches between CSV and holding companies
+const companyAliases = {
+    'tatamotors': ['tmpv', 'tatamotorsltd'],
+    'tmpv': ['tatamotors', 'tatamotorsltd']
+};
+
 // ===== Process Data and Create Mappings =====
 function processData() {
     const datesSet = new Set();
@@ -134,35 +152,35 @@ function processData() {
 
         if (!companyName) return;
 
+        // Normalize holding company identifiers
+        const normalizedSymbol = normalizeCompanyName(companySymbol);
+        const normalizedName = normalizeCompanyName(companyName);
+
         const companyEntries = announcementsData.filter(entry => {
             const entryCompany = (entry.Company || entry.company || '').trim();
+            const normalizedEntry = normalizeCompanyName(entryCompany);
 
-            // Match by symbol (exact match ONLY, case-insensitive)
-            const symbolMatch =
-                entryCompany.toLowerCase() === companySymbol.toLowerCase();
-
-            // Match by company name (exact match ONLY, case-insensitive)
-            const exactNameMatch =
-                entryCompany.toLowerCase() === companyName.toLowerCase();
-
-            // Partial name match (only if entry is longer than 3 chars to avoid false matches)
-            const partialNameMatch = entryCompany.length > 3 && (
-                companyName.toLowerCase().includes(entryCompany.toLowerCase()) ||
-                entryCompany.toLowerCase().includes(companyName.toLowerCase())
-            );
-
-            // Fuzzy match: Check if entry company contains key words from holding company name
-            // Only apply fuzzy matching for entries longer than 3 characters
-            let fuzzyMatch = false;
-            if (entryCompany.length > 3) {
-                const entryWords = entryCompany.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const nameWords = companyName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
-                const commonWords = ['ltd', 'limited', 'co', 'company', 'inc', 'corporation', 'corp'];
-                const significantWords = nameWords.filter(word => word.length > 2 && !commonWords.includes(word));
-                fuzzyMatch = significantWords.length > 0 && (significantWords.length === 1 ? entryWords.includes(significantWords[0]) : significantWords.filter(word => entryWords.includes(word)).length >= Math.min(2, significantWords.length));
+            // Direct match by normalized symbol or normalized company name
+            if (normalizedEntry === normalizedSymbol || normalizedEntry === normalizedName) {
+                return true;
             }
 
-            return symbolMatch || exactNameMatch || partialNameMatch || fuzzyMatch;
+            // Check aliases
+            const entryAliases = companyAliases[normalizedEntry] || [];
+            const symbolAliases = companyAliases[normalizedSymbol] || [];
+            const nameAliases = companyAliases[normalizedName] || [];
+
+            // Check if entry is an alias of symbol or name
+            if (entryAliases.includes(normalizedSymbol) || entryAliases.includes(normalizedName)) {
+                return true;
+            }
+
+            // Check if symbol or name is an alias of entry
+            if (symbolAliases.includes(normalizedEntry) || nameAliases.includes(normalizedEntry)) {
+                return true;
+            }
+
+            return false;
         });
 
         if (companyEntries.length > 0) {
