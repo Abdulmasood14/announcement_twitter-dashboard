@@ -205,6 +205,21 @@ function processData() {
 function parseDate(dateStr) {
     if (!dateStr) return null;
 
+    // Try DD/MM/YYYY format first (e.g., "22/12/2025")
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const year = parseInt(parts[2]);
+
+            if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                return new Date(year, month, day);
+            }
+        }
+    }
+
+    // Try YYYY-MM-DD format (e.g., "2025-12-22")
     const parts = dateStr.split('-');
     if (parts.length === 3) {
         const year = parseInt(parts[0]);
@@ -273,14 +288,21 @@ function renderCalendar() {
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const hasData = availableDates.includes(dateStr);
-        const count = dateCounts[dateStr] || 0;
-        const isSelected = selectedDate === dateStr;
+        // Create date strings in both formats for matching
+        const dateStrYMD = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStrDMY = `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+
+        // Check for data in either format
+        const hasData = availableDates.includes(dateStrYMD) || availableDates.includes(dateStrDMY);
+        const count = dateCounts[dateStrYMD] || dateCounts[dateStrDMY] || 0;
+
+        // Use the format that exists in availableDates for selection
+        const actualDateStr = availableDates.includes(dateStrDMY) ? dateStrDMY : dateStrYMD;
+        const isSelected = selectedDate === dateStrYMD || selectedDate === dateStrDMY;
 
         calendarHTML += `
             <div class="calendar-day ${hasData ? 'has-data' : ''} ${isSelected ? 'selected' : ''}" 
-                 data-date="${dateStr}">
+                 data-date="${actualDateStr}">
                 <div class="day-number">${day}</div>
             </div>
         `;
