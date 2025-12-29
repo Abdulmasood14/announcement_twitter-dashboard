@@ -14,7 +14,7 @@ let searchQuery = ''; // Search input value
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing Dashboard...');
     await loadData();
-    renderCalendar();
+    // renderCalendar(); // Removed - calendar no longer in UI
     renderCompanies();
     setupEventListeners();
 });
@@ -187,11 +187,16 @@ function processData() {
             companyDataMap.set(companySymbol, {
                 company: company,
                 entries: companyEntries,
-                announcements: companyEntries.filter(e =>
-                    (e['COMPANY TYPE'] || e.type || '').toLowerCase() === 'announcement'
-                ),
+                announcements: companyEntries.filter(e => {
+                    const type = (e['COMPANY TYPE'] || e.type || '').toLowerCase().trim();
+                    // If type is empty but has a summary, treat as announcement
+                    if (!type && (e.SUMMARY || e.summary)) {
+                        return true;
+                    }
+                    return type === 'announcement';
+                }),
                 twitter: companyEntries.filter(e =>
-                    (e['COMPANY TYPE'] || e.type || '').toLowerCase() === 'twitter'
+                    (e['COMPANY TYPE'] || e.type || '').toLowerCase().trim() === 'twitter'
                 )
             });
         }
@@ -239,7 +244,7 @@ function parseDate(dateStr) {
 function updateStats() {
     document.getElementById('totalCompanies').textContent = holdingCompanies.length;
     // document.getElementById('companiesWithData').textContent = companyDataMap.size;
-    document.getElementById('selectedDate').textContent = selectedDate ? formatDate(selectedDate) : 'All Dates';
+    // document.getElementById('selectedDate').textContent = selectedDate ? formatDate(selectedDate) : 'All Dates'; // Removed - element no longer exists
 }
 
 // ===== Render Calendar =====
@@ -360,6 +365,13 @@ function renderCompanies(filterDate = null, search = '') {
         }
     });
 
+    // Sort companies alphabetically (A to Z)
+    companiesToShow.sort((a, b) => {
+        const nameA = (a.company_name || a.name || '').toLowerCase();
+        const nameB = (b.company_name || b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+
     if (companiesToShow.length === 0) {
         grid.innerHTML = '<div class="loading">No companies found for selected date</div>';
         return;
@@ -426,40 +438,14 @@ function renderCompanies(filterDate = null, search = '') {
 
 // ===== Setup Event Listeners =====
 function setupEventListeners() {
-    document.getElementById('calendar').addEventListener('click', (e) => {
-        const dayCell = e.target.closest('.calendar-day');
-        if (!dayCell || dayCell.classList.contains('empty')) return;
-
-        const date = dayCell.dataset.date;
-        if (!date) return;
-
-        if (selectedDate === date) {
-            selectedDate = null;
-        } else {
-            selectedDate = date;
-        }
-
-        updateStats();
-        renderCalendar();
-        renderCompanies(selectedDate, searchQuery);
-    });
-
-    document.getElementById('calendar').addEventListener('click', (e) => {
-        if (e.target.id === 'prevMonth') {
-            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-            renderCalendar();
-        } else if (e.target.id === 'nextMonth') {
-            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
-            renderCalendar();
-        }
-    });
+    // Calendar event listeners removed - calendar no longer in UI
 
     document.getElementById('resetFilter').addEventListener('click', () => {
         selectedDate = null;
         searchQuery = '';
         document.getElementById('searchInput').value = '';
         updateStats();
-        renderCalendar();
+        // renderCalendar(); // Removed
         renderCompanies();
     });
 
@@ -615,17 +601,22 @@ function showCategoryDetails(category) {
             }
             summary = lines.join('\n').trim();
 
-            const key = `${date}-${summary}`;
+            // Group by summary ONLY (not date+summary)
+            const key = summary;
 
             if (!summaryGroups.has(key)) {
                 summaryGroups.set(key, {
-                    date: date,
+                    dates: new Set(), // Store all unique dates
                     summary: summary,
                     sources: []
                 });
             }
 
+            // Add date to the set
+            summaryGroups.get(key).dates.add(date);
+
             summaryGroups.get(key).sources.push({
+                date: date, // Store date with each source
                 tweetUrl: entry['TWEET_URL'] || entry.TWEET_URL || '',
                 sourceLinks: entry['SOURCE_LINK'] || entry.SOURCE_LINK || '',
                 channelName: entry['CHANNEL_NAME'] || entry.CHANNEL_NAME || ''
@@ -638,9 +629,12 @@ function showCategoryDetails(category) {
         summaryGroups.forEach(group => {
             const summary = group.summary.replace(/\n/g, '<br>') || 'No summary available';
 
+            // Format all dates
+            const allDates = Array.from(group.dates).sort().map(d => formatDate(d)).join(', ');
+
             detailsHTML += `
                 <div class="detail-item twitter-item">
-                    <div class="detail-date">${formatDate(group.date)}</div>
+                    <div class="detail-date">📅 ${allDates}</div>
                     <div class="detail-summary">${summary}</div>
             `;
 
@@ -649,14 +643,18 @@ function showCategoryDetails(category) {
                 const channelName = source.channelName.trim();
                 const tweetUrl = source.tweetUrl.trim();
                 const sourceLinks = source.sourceLinks.trim();
+                const sourceDate = formatDate(source.date);
 
-                console.log('🔍 Source #' + (index + 1) + ':', { channelName, tweetUrl, sourceLinks });
+                console.log('🔍 Source #' + (index + 1) + ':', { channelName, tweetUrl, sourceLinks, date: sourceDate });
 
                 detailsHTML += `
                     <div class="tweet-source-group" style="margin-top: ${index === 0 ? '1rem' : '0.75rem'}; padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 0.5rem; border-left: 3px solid var(--secondary-color);">
-                        ${channelName ? `<div class="detail-meta" style="margin-bottom: 0.5rem;">Channel: ${channelName}</div>` : ''}
+                        <div class="detail-meta" style="margin-bottom: 0.5rem;">
+                            ${channelName ? `<span>Channel: ${channelName}</span> • ` : ''}
+                            <span>Date: ${sourceDate}</span>
+                        </div>
                         <div class="detail-links">
-                            ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link"> View Tweet</a>` : ''}
+                            ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link">🐦 View Tweet</a>` : ''}
                             ${sourceLinks ? sourceLinks.split('\n').filter(link => link.trim()).map(link => {
                     const cleanLink = link.trim().replace(/^-/, '').trim();
                     console.log('🔗 Link:', cleanLink);
@@ -721,10 +719,27 @@ function showCategoryDetails(category) {
         if (category === 'announcements') {
             const sourceLink = (entry.SOURCE_LINK || entry.source_link || '').trim();
 
+            // Format bullet points as proper list items
+            let formattedSummary = summary;
+
+            // Check if summary has bullet points (•, -, *)
+            if (summary.includes('•') || summary.includes('- ') || summary.includes('* ')) {
+                // Split by bullet markers and create list
+                const bulletLines = summary.split(/(?:•|(?:^|\<br\>)\s*-\s|(?:^|\<br\>)\s*\*\s)/g)
+                    .map(line => line.replace(/<br>/g, '').trim())
+                    .filter(line => line.length > 0);
+
+                if (bulletLines.length > 1) {
+                    formattedSummary = '<ul class="summary-list">' +
+                        bulletLines.map(line => `<li>${line}</li>`).join('') +
+                        '</ul>';
+                }
+            }
+
             detailsHTML += `
                 <div class="detail-item announcement-item">
                     <div class="detail-date">📅 ${formatDate(date)}</div>
-                    <div class="detail-summary">${summary}</div>
+                    <div class="detail-summary">${formattedSummary}</div>
                     ${sourceLink ? `
                         <div class="detail-links">
                             <a href="${sourceLink}" target="_blank" class="detail-link">📄 View Announcement</a>
