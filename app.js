@@ -10,6 +10,222 @@ let currentCategory = null; // 'announcements' or 'twitter'
 let currentCompanyData = null;
 let searchQuery = ''; // Search input value
 
+// ===== Company Logo Domains =====
+// Complete mapping for all 122+ companies to their website domains
+const companyDomains = {
+    // A
+    '3MINDIA': '3m.com',
+    'ABBOTINDIA': 'abbott.com',
+    'AGOL': 'ashapurigold.com',
+    'ALIVUS': 'alivus.com',
+    'AMBER': 'ambergroupindia.com',
+    'APOLLOHOSP': 'apollohospitals.com',
+    'ARE&M': 'amararajabatteries.com',
+    'ASIANPAINT': 'asianpaints.com',
+    'ASTRAMICRO': 'astramwp.com',
+    'AUROPHARMA': 'aurobindo.com',
+    'AUTOBEES': 'nipponindiaim.com',
+    'AXISBANK': 'axisbank.com',
+    // B
+    'BAJFINANCE': 'bajajfinserv.in',
+    'BALKRISIND': 'bkt-tires.com',
+    'BBL': 'bharatbijlee.com',
+    'BDL': 'bdl-india.com',
+    'BEL': 'bel-india.com',
+    'BHARATFORG': 'bharatforge.com',
+    'BHEL': 'bhel.com',
+    'BIOCON': 'biocon.com',
+    // C
+    'CAPLIPOINT': 'caplinpoint.net',
+    'CDSL': 'cdslindia.com',
+    'CIPLA': 'cipla.com',
+    'COFORGE': 'coforge.com',
+    'COMPEAU': 'competent-maruti.com',
+    'CUMMINSIND': 'cumminsindia.com',
+    // D
+    'DECNGOLD': 'deccangoldmines.com',
+    'DEN': 'dennetworks.com',
+    'DRREDDY': 'drreddys.com',
+    'DYNAMATECH': 'dynamatics.com',
+    // E
+    'EMBASSY': 'embassyofficeparks.com',
+    'ESCORTS': 'escortskubota.com',
+    'ETERNAL': 'eternal.com',
+    // G
+    'GMMPFAUDLR': 'gmmpfaudler.com',
+    'GMRAIRPORT': 'gmrgroup.in',
+    'GODREJCP': 'godrejcp.com',
+    'GOLD1': 'kotakmf.com',
+    'GOLDIETF': 'icicipruamc.com',
+    'GRASIM': 'grasim.com',
+    'GULFOILLUB': 'gulfoilindia.com',
+    // H
+    'HAL': 'hal-india.com',
+    'HCLTECH': 'hcltech.com',
+    'HDFCBANK': 'hdfcbank.com',
+    'HGINFRA': 'hginfra.com',
+    'HINDUNILVR': 'hul.co.in',
+    // I
+    'ICICIBANK': 'icicibank.com',
+    'ICICIGI': 'icicilombard.com',
+    'ICICIPRULI': 'iciciprulife.com',
+    'IEX': 'iexindia.com',
+    'INDHOTEL': 'tajhotels.com',
+    'INTERARCH': 'interarchbuildings.com',
+    'IOC': 'iocl.com',
+    'ITC': 'itcportal.com',
+    'ITCHOTELS': 'itchotels.com',
+    // J
+    'JAMNAAUTO': 'jspring.com',
+    'JAYBARMARU': 'jbmgroup.com',
+    'JIOFIN': 'jfs.in',
+    'JUNIORBEES': 'nipponindiaim.com',
+    // K
+    'KAYNES': 'kaynestechnology.co.in',
+    'KEI': 'kei-ind.com',
+    'KICL': 'kalyanigroup.com',
+    'KIRLOSENG': 'kirloskaroilengines.com',
+    'KOTAKBANK': 'kotak.com',
+    'KPIGREEN': 'kpigreenenergy.com',
+    'KRT': 'knowledgerealtytrust.com',
+    // L
+    'LT': 'larsentoubro.com',
+    'LTFOODS': 'ltfoods.com',
+    'LAURUSLABS': 'lauruslabs.com',
+    // M
+    'MACPLASQ': 'machino.com',
+    'MANKIND': 'mankindpharma.com',
+    'MAPMYINDIA': 'mapmyindia.com',
+    'MARICO': 'marico.com',
+    'MARUTI': 'marutisuzuki.com',
+    'MAZDOCK': 'mazagondock.in',
+    'MINDACORP': 'sparkminda.com',
+    'MINDSPACE': 'mindspaceindia.com',
+    'MOSMALL250': 'motilaloswalmf.com',
+    'MSUMI': 'motherson.com',
+    'MYSORPETRO': 'mysorepetro.com',
+    // N
+    'NATIONALUM': 'nalcoindia.com',
+    'NESTLEIND': 'nestle.in',
+    'NEULANDLAB': 'neulandlabs.com',
+    'NH': 'narayanahealth.org',
+    'NIFTYBEES': 'nipponindiaim.com',
+    'NSIL': 'nalwasons.com',
+    // P
+    'PGINVIT': 'pginvit.in',
+    'PIDILITIND': 'pidilite.com',
+    'PILANIINVS': 'birlagroup.com',
+    'PRAJIND': 'praj.net',
+    // R
+    'RBLBANK': 'rblbank.com',
+    'RELIANCE': 'ril.com',
+    // S
+    'SBIN': 'sbi.co.in',
+    'SCHAEFFLER': 'schaeffler.co.in',
+    'SCILAL': 'scilal.com',
+    'SHOPERSTOP': 'shoppersstop.com',
+    'SIEMENS': 'siemens.com',
+    'SILVERBEES': 'nipponindiaim.com',
+    'SILVERIETF': 'icicipruamc.com',
+    'SONACOMS': 'sonacomstar.com',
+    'STYLAMIND': 'stylam.com',
+    'SUNPHARMA': 'sunpharma.com',
+    'SYNGENE': 'syngeneintl.com',
+    // T
+    'TATACOMM': 'tatacommunications.com',
+    'TATACONSUM': 'tataconsumer.com',
+    'TATAELXSI': 'tataelxsi.com',
+    'TATAPOWER': 'tatapower.com',
+    'TCI': 'tciexpress.in',
+    'TCS': 'tcs.com',
+    'TIMKEN': 'timken.com',
+    'TINNARUBR': 'tinna.in',
+    'TITAN': 'titancompany.in',
+    'TMCV': 'tatamotors.com',
+    'TMPV': 'tatamotors.com',
+    'TRENT': 'trentlimited.com',
+    // U
+    'ULTRACEMCO': 'ultratechcement.com',
+    'UNITDSPR': 'diageo.com',
+    'UNIVCABLES': 'unistar.co.in',
+    // V
+    'VBL': 'varunbeverages.com',
+    'VEDL': 'vedantalimited.com',
+    // W
+    'WELCORP': 'welspuncorp.com',
+    'WPIL': 'wpil.co.in',
+    // Z
+    'ZYDUSLIFE': 'zyduslife.com'
+};
+
+// Dynamic domain generator for companies not in the mapping
+// This will automatically try to find logos for any new company
+function generateDomainFromName(companyName) {
+    if (!companyName) return null;
+
+    // Common suffixes to remove
+    const suffixes = /\s*(ltd\.?|limited|pvt\.?|private|co\.?|company|inc\.?|corp\.?|corporation|industries?|enterprises?|india|etf|reit|bees|invit)\s*/gi;
+
+    // Clean the company name
+    let cleanName = companyName.toLowerCase()
+        .replace(suffixes, ' ')
+        .replace(/[^a-z0-9\s]/g, '')
+        .trim()
+        .split(/\s+/)
+        .filter(word => word.length > 2) // Remove small words
+        .slice(0, 2) // Take first 2 words
+        .join('');
+
+    if (cleanName.length > 0) {
+        // Return .com domain for most companies
+        return cleanName + '.com';
+    }
+    return null;
+}
+
+// Function to get company logo URL - uses multiple fallback sources
+function getCompanyLogoUrl(symbol, companyName) {
+    const trimmedSymbol = symbol.trim();
+    let domain = companyDomains[trimmedSymbol];
+
+    // If not in mapping, try to generate from company name
+    if (!domain && companyName) {
+        domain = generateDomainFromName(companyName);
+    }
+
+    if (domain) {
+        // Primary: Clearbit Logo API (free, good quality)
+        return `https://logo.clearbit.com/${domain}`;
+    }
+    return null;
+}
+
+// Alternative logo URL (fallback)
+function getAlternativeLogoUrl(symbol, companyName) {
+    const trimmedSymbol = symbol.trim();
+    let domain = companyDomains[trimmedSymbol];
+
+    // If not in mapping, try to generate from company name
+    if (!domain && companyName) {
+        domain = generateDomainFromName(companyName);
+    }
+
+    if (domain) {
+        // Fallback: Logo.dev API
+        return `https://img.logo.dev/${domain}?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+    }
+    return null;
+}
+
+// Function to generate initials fallback
+function getCompanyInitials(name) {
+    const words = name.split(' ').filter(w => w.length > 0);
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
 // ===== Initialize Application =====
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing Dashboard...');
@@ -17,7 +233,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // renderCalendar(); // Removed - calendar no longer in UI
     renderCompanies();
     setupEventListeners();
+    setupScrollOptimizations();
 });
+
+// ===== Scroll Performance Optimizations =====
+function setupScrollOptimizations() {
+    // Use passive listeners for scroll events
+    document.addEventListener('scroll', () => { }, { passive: true });
+
+    // Add passive listeners to any scrollable containers
+    const modalBody = document.querySelector('.modal-body');
+    if (modalBody) {
+        modalBody.addEventListener('scroll', () => { }, { passive: true });
+    }
+}
 
 // ===== Load CSV Data =====
 async function loadData() {
@@ -187,16 +416,11 @@ function processData() {
             companyDataMap.set(companySymbol, {
                 company: company,
                 entries: companyEntries,
-                announcements: companyEntries.filter(e => {
-                    const type = (e['COMPANY TYPE'] || e.type || '').toLowerCase().trim();
-                    // If type is empty but has a summary, treat as announcement
-                    if (!type && (e.SUMMARY || e.summary)) {
-                        return true;
-                    }
-                    return type === 'announcement';
-                }),
+                announcements: companyEntries.filter(e =>
+                    (e['COMPANY TYPE'] || e.type || '').toLowerCase() === 'announcement'
+                ),
                 twitter: companyEntries.filter(e =>
-                    (e['COMPANY TYPE'] || e.type || '').toLowerCase().trim() === 'twitter'
+                    (e['COMPANY TYPE'] || e.type || '').toLowerCase() === 'twitter'
                 )
             });
         }
@@ -365,17 +589,17 @@ function renderCompanies(filterDate = null, search = '') {
         }
     });
 
-    // Sort companies alphabetically (A to Z)
+    if (companiesToShow.length === 0) {
+        grid.innerHTML = '<div class="loading">No companies found for selected date</div>';
+        return;
+    }
+
+    // Sort companies alphabetically by company name (A-Z)
     companiesToShow.sort((a, b) => {
         const nameA = (a.company_name || a.name || '').toLowerCase();
         const nameB = (b.company_name || b.name || '').toLowerCase();
         return nameA.localeCompare(nameB);
     });
-
-    if (companiesToShow.length === 0) {
-        grid.innerHTML = '<div class="loading">No companies found for selected date</div>';
-        return;
-    }
 
     grid.innerHTML = companiesToShow.map(company => {
         const symbol = company.name || '';
@@ -426,11 +650,26 @@ function renderCompanies(filterDate = null, search = '') {
             }
         }
 
+        // Get logo URL or generate initials fallback
+        const logoUrl = getCompanyLogoUrl(symbol, name);
+        const altLogoUrl = getAlternativeLogoUrl(symbol, name);
+        const initials = getCompanyInitials(name);
+
+        const logoHtml = logoUrl
+            ? `<div class="company-logo">
+                <img src="${logoUrl}" alt="${symbol}" onerror="this.onerror=null; if('${altLogoUrl}' !== 'null') { this.src='${altLogoUrl}'; } else { this.style.display='none'; this.nextElementSibling.style.display='flex'; }">
+                <div class="company-initials" style="display:none;">${initials}</div>
+               </div>`
+            : `<div class="company-logo"><div class="company-initials">${initials}</div></div>`;
+
         return `
             <div class="company-card" data-symbol="${symbol}">
-                <div class="company-symbol">${symbol}</div>
-                <div class="company-name">${name}</div>
-                ${badges ? `<div class="company-badges">${badges}</div>` : ''}
+                ${logoHtml}
+                <div class="company-info">
+                    <div class="company-symbol">${symbol}</div>
+                    <div class="company-name">${name}</div>
+                    ${badges ? `<div class="company-badges">${badges}</div>` : ''}
+                </div>
             </div>
         `;
     }).join('');
@@ -449,10 +688,18 @@ function setupEventListeners() {
         renderCompanies();
     });
 
-    // Search input
+    // Search input with debouncing for better performance
+    let searchTimeout = null;
     document.getElementById('searchInput').addEventListener('input', (e) => {
         searchQuery = e.target.value;
-        renderCompanies(selectedDate, searchQuery);
+
+        // Debounce search to prevent excessive re-renders
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            requestAnimationFrame(() => {
+                renderCompanies(selectedDate, searchQuery);
+            });
+        }, 150); // 150ms delay for smoother typing
     });
 
     document.getElementById('companiesGrid').addEventListener('click', (e) => {
@@ -634,7 +881,7 @@ function showCategoryDetails(category) {
 
             detailsHTML += `
                 <div class="detail-item twitter-item">
-                    <div class="detail-date">📅 ${allDates}</div>
+                    <div class="detail-date"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${allDates}</div>
                     <div class="detail-summary">${summary}</div>
             `;
 
@@ -650,8 +897,7 @@ function showCategoryDetails(category) {
                 detailsHTML += `
                     <div class="tweet-source-group" style="margin-top: ${index === 0 ? '1rem' : '0.75rem'}; padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 0.5rem; border-left: 3px solid var(--secondary-color);">
                         <div class="detail-meta" style="margin-bottom: 0.5rem;">
-                            ${channelName ? `<span>Channel: ${channelName}</span> • ` : ''}
-                            <span>Date: ${sourceDate}</span>
+                            ${channelName ? `<span>Channel: ${channelName}</span>` : ''}
                         </div>
                         <div class="detail-links">
                             ${tweetUrl ? `<a href="${tweetUrl}" target="_blank" class="detail-link">🐦 View Tweet</a>` : ''}
@@ -690,6 +936,13 @@ function showCategoryDetails(category) {
             // Remove quotes first
             summary = summary.replace(/^"/, '').replace(/"$/, '');
 
+            // Clean ALL UTF-8 encoding artifacts with a comprehensive regex
+            // This removes: Ã¢€¢, Ã¢ÂÂ¢, â€¢, â¢, Ã¢, â, Â, and similar garbled characters
+            summary = summary.replace(/[ÃâÂ]+[€¢Â]*/g, '');
+
+            // Add proper bullets at the start of lines if needed
+            summary = summary.replace(/^\s*/gm, '• ');
+
             // Split into lines
             const lines = summary.split('\n');
             console.log('Summary lines:', lines.length);
@@ -719,27 +972,10 @@ function showCategoryDetails(category) {
         if (category === 'announcements') {
             const sourceLink = (entry.SOURCE_LINK || entry.source_link || '').trim();
 
-            // Format bullet points as proper list items
-            let formattedSummary = summary;
-
-            // Check if summary has bullet points (•, -, *)
-            if (summary.includes('•') || summary.includes('- ') || summary.includes('* ')) {
-                // Split by bullet markers and create list
-                const bulletLines = summary.split(/(?:•|(?:^|\<br\>)\s*-\s|(?:^|\<br\>)\s*\*\s)/g)
-                    .map(line => line.replace(/<br>/g, '').trim())
-                    .filter(line => line.length > 0);
-
-                if (bulletLines.length > 1) {
-                    formattedSummary = '<ul class="summary-list">' +
-                        bulletLines.map(line => `<li>${line}</li>`).join('') +
-                        '</ul>';
-                }
-            }
-
             detailsHTML += `
                 <div class="detail-item announcement-item">
-                    <div class="detail-date">📅 ${formatDate(date)}</div>
-                    <div class="detail-summary">${formattedSummary}</div>
+                    <div class="detail-date"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${formatDate(date)}</div>
+                    <div class="detail-summary">${summary}</div>
                     ${sourceLink ? `
                         <div class="detail-links">
                             <a href="${sourceLink}" target="_blank" class="detail-link">📄 View Announcement</a>
@@ -755,7 +991,7 @@ function showCategoryDetails(category) {
 
             detailsHTML += `
                 <div class="detail-item twitter-item">
-                    <div class="detail-date">${formatDate(date)}</div>
+                    <div class="detail-date"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${formatDate(date)}</div>
                     <div class="detail-summary">${summary}</div>
                     ${channelName ? `
                         <div class="detail-meta">
