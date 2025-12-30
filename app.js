@@ -31,7 +31,7 @@ const companyDomains = {
     'BALKRISIND': 'bkt-tires.com',
     'BBL': 'bharatbijlee.com',
     'BDL': 'bdl-india.com',
-    'BEL': 'bel-india.com',
+    'BEL': 'bharatelectronics.com',
     'BHARATFORG': 'bharatforge.com',
     'BHEL': 'bhel.com',
     'BIOCON': 'biocon.com',
@@ -186,6 +186,12 @@ function generateDomainFromName(companyName) {
 // Function to get company logo URL - uses multiple fallback sources
 function getCompanyLogoUrl(symbol, companyName) {
     const trimmedSymbol = symbol.trim();
+
+    // Special cases for companies where Clearbit doesn't have correct logos
+    if (trimmedSymbol === 'BEL') {
+        return 'https://static.cdnlogo.com/logos/b/54/bharat-electronics.svg';
+    }
+
     let domain = companyDomains[trimmedSymbol];
 
     // If not in mapping, try to generate from company name
