@@ -371,7 +371,12 @@ function processData() {
         }
     });
 
-    availableDates = Array.from(datesSet).sort().reverse(); // Latest to oldest
+    availableDates = Array.from(datesSet).sort((a, b) => {
+        const da = parseDate(a);
+        const db = parseDate(b);
+        if (!da || !db) return 0;
+        return db - da; // Latest to oldest
+    });
     console.log(`📅 Found ${availableDates.length} unique dates:`, availableDates);
 
     if (availableDates.length > 0) {
@@ -840,9 +845,14 @@ function showCategoryDetails(category) {
 
     // Sort items by date (newest to oldest - latest first)
     items = items.sort((a, b) => {
-        const dateA = (a.DATES || a.dates || a.Date || '').trim();
-        const dateB = (b.DATES || b.dates || b.Date || '').trim();
-        return dateB.localeCompare(dateA); // Descending order (latest first)
+        const dateA = parseDate((a.DATES || a.dates || a.Date || '').trim());
+        const dateB = parseDate((b.DATES || b.dates || b.Date || '').trim());
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return dateB - dateA; // Descending order (latest first)
     });
 
     // For Twitter, group by summary to show all sources
@@ -889,8 +899,13 @@ function showCategoryDetails(category) {
         summaryGroups.forEach(group => {
             const summary = group.summary.replace(/\n/g, '<br>') || 'No summary available';
 
-            // Format all dates
-            const allDates = Array.from(group.dates).sort().map(d => formatDate(d)).join(', ');
+            // Format all dates and sort them
+            const sortedDates = Array.from(group.dates).sort((a, b) => {
+                const da = parseDate(a);
+                const db = parseDate(b);
+                return db - da;
+            });
+            const allDates = sortedDates.map(d => formatDate(d)).join(', ');
 
             detailsHTML += `
                 <div class="detail-item twitter-item">
