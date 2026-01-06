@@ -1,3 +1,4 @@
+// VERSION: 2.0.1 - Diamond symbol cleaning fix
 // ===== Global State =====
 let holdingCompanies = [];
 let announcementsData = [];
@@ -964,25 +965,111 @@ function showCategoryDetails(category) {
             // Remove quotes first
             summary = summary.replace(/^"/, '').replace(/"$/, '');
 
-            // Clean ALL UTF-8 encoding artifacts with a comprehensive regex
-            // This removes: Ã¢€¢, Ã¢ÂÂ¢, â€¢, â¢, Ã¢, â, Â, and similar garbled characters
+            // ===== STEP 1: Clean ALL unwanted characters FIRST =====
+
+            // Clean UTF-8 encoding artifacts
             summary = summary.replace(/[ÃâÂ]+[€¢Â]*/g, '');
+            summary = summary.replace(/€/g, '');
+            summary = summary.replace(/Â/g, '');
 
-            // Add proper bullets at the start of lines if needed
-            summary = summary.replace(/^\s*/gm, '• ');
+            // Remove ALL Unicode box and geometric shape characters
+            summary = summary.replace(/[\u2500-\u257F]/g, ''); // Box Drawing
+            summary = summary.replace(/[\u2580-\u259F]/g, ''); // Block Elements
+            summary = summary.replace(/[\u25A0-\u25FF]/g, ''); // Geometric Shapes
+            summary = summary.replace(/[\u2600-\u26FF]/g, ''); // Miscellaneous Symbols
+            summary = summary.replace(/[\u2700-\u27BF]/g, ''); // Dingbats
+            summary = summary.replace(/[\u2610-\u2612]/g, ''); // Ballot boxes
+            summary = summary.replace(/[\u2B1A-\u2B1C]/g, ''); // More squares
 
-            // Split into lines
-            const lines = summary.split('\n');
-            console.log('Summary lines:', lines.length);
+            // Additional specific box characters
+            summary = summary.replace(/\u25A1/g, ''); // White square
+            summary = summary.replace(/\u25A0/g, ''); // Black square
+            summary = summary.replace(/\u25AB/g, ''); // White small square
+            summary = summary.replace(/\u25AA/g, ''); // Black small square
+            summary = summary.replace(/\u25FB/g, ''); // White medium square
+            summary = summary.replace(/\u25FC/g, ''); // Black medium square
+            summary = summary.replace(/\u25FD/g, ''); // White medium small square
+            summary = summary.replace(/\u25FE/g, ''); // Black medium small square
 
-            // If first line starts with "Sources:", remove it
-            if (lines.length > 0 && lines[0].match(/^Sources?:/i)) {
-                console.log('Removing Sources line:', lines[0]);
-                lines.shift(); // Remove first line
-            }
+            // Explicitly remove diamond symbols AND the replacement character �
+            // The CSV diamond symbols (◆) are converted to � (U+FFFD) by the browser
+            summary = summary.replace(/[◆◇♦♢�]/g, '');
+            summary = summary.replace(/\ufffd/g, ''); // Double-check removal
 
-            // Join remaining lines and clean
-            summary = lines.join('\n').trim();
+            // Remove control characters and zero-width characters
+            summary = summary.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+            summary = summary.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+            // Remove markdown headers (### anywhere in text, not just at line start)
+            summary = summary.replace(/#+/g, '');
+
+            // Remove ALL asterisks (both single * and double **)
+            summary = summary.replace(/\*/g, '');
+
+            // Remove colons that appear after common header words
+            summary = summary.replace(/^(Announcement Type|Key Insights|Approval Details|Significance|Key Dates|Parties Involved|Bottom Line|Conclusion|Summary|Key Points):\s*/gmi, '$1 ');
+
+            // ===== STEP 2: Process lines and add clean bullets =====
+
+            // First, split on existing bullet points (•) to separate items
+            // This handles cases where all bullets are on one line
+            let parts = summary.split(/•+/);
+
+            // Also split on diamond symbols (◆) and the replacement character �
+            let diamondParts = [];
+            parts.forEach(part => {
+                // Split on ◆ ◇ ♦ ♢ � and similar diamond/geometric markers
+                diamondParts.push(...part.split(/[◆◇♦♢�\ufffd]/));
+            });
+
+            // Also split on numbered lists (1. 2. 3. etc.)
+            let numberedParts = [];
+            diamondParts.forEach(part => {
+                // Split on patterns like "1. " or "2. " or "10. "
+                numberedParts.push(...part.split(/\s+\d+\.\s+/));
+            });
+
+            // Also split on newlines to catch line-based formatting
+            let allParts = [];
+            numberedParts.forEach(part => {
+                allParts.push(...part.split('\n'));
+            });
+
+
+            // Clean each part
+            const cleanedLines = allParts.map(line => {
+                line = line.trim();
+
+                // Skip empty lines
+                if (!line) return '';
+
+                // Remove "Sources:" prefix if present
+                if (line.match(/^Sources?:/i)) return '';
+
+                // Remove "Key Points:" prefix if it's standalone
+                if (line.match(/^Key Points?:?\s*$/i)) return '';
+
+                // Remove ALL existing bullets/markers at start
+                line = line.replace(/^[•·∙▪▫◦⦿⦾○●◉◎⊙⊚⊛⊜☉♦♢▸►▹‣⁃−–—\s]+/, '');
+
+                // Remove numbered list markers at the start (1., 2., etc.)
+                line = line.replace(/^\d+\.\s*/, '');
+
+                // Remove hyphen bullets
+                line = line.replace(/^[-]\s+/, '');
+
+                // Trim again after removing bullets
+                line = line.trim();
+
+                // Skip if line is now empty or too short
+                if (!line || line.length < 3) return '';
+
+                // Only add single bullet if line has content
+                return '• ' + line;
+            }).filter(line => line); // Remove empty lines
+
+            // Join lines with proper spacing
+            summary = cleanedLines.join('\n').trim();
 
             // Convert newlines to <br> for HTML display
             summary = summary.replace(/\n/g, '<br>');
