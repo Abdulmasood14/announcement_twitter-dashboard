@@ -255,25 +255,27 @@ function setupScrollOptimizations() {
     }
 }
 
-// ===== Load CSV Data =====
+// ===== Load Excel Data =====
 async function loadData() {
     try {
+        // Load holding companies from CSV (keeping this as CSV since it's small)
         const holdingResponse = await fetch('data/holding-companies.csv');
         const holdingText = await holdingResponse.text();
         holdingCompanies = parseCSV(holdingText);
         console.log(`✅ Loaded ${holdingCompanies.length} holding companies`);
 
-        const announcementsResponse = await fetch('data/announcements.csv');
-        const announcementsText = await announcementsResponse.text();
-        announcementsData = parseCSV(announcementsText);
-        console.log(`✅ Loaded ${announcementsData.length} announcement/twitter entries`);
+        // Load announcements from Excel file
+        const announcementsResponse = await fetch('data/announcements.xlsx');
+        const announcementsBuffer = await announcementsResponse.arrayBuffer();
+        announcementsData = parseExcel(announcementsBuffer);
+        console.log(`✅ Loaded ${announcementsData.length} announcement/twitter entries from Excel`);
 
         processData();
     } catch (error) {
         console.error('❌ Error loading data:', error);
         document.getElementById('companiesGrid').innerHTML = `
             <div class="loading" style="color: #ef4444;">
-                <p>⚠️ Error loading data. Please ensure CSV files are in the 'data' folder.</p>
+                <p>⚠️ Error loading data. Please ensure Excel file is in the 'data' folder.</p>
             </div>
         `;
     }
@@ -304,6 +306,10 @@ function parseCSVLine(line) {
 
 // ===== Parse CSV with Multi-line Support =====
 function parseCSV(text) {
+    // Strip BOM if present
+    if (text.charCodeAt(0) === 0xFEFF) {
+        text = text.slice(1);
+    }
     const lines = text.trim().split('\n');
     const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/\r/g, ''));
 
@@ -340,6 +346,42 @@ function parseCSV(text) {
     }
 
     return data;
+}
+
+// ===== Parse Excel File =====
+function parseExcel(arrayBuffer) {
+    try {
+        // Read the Excel file using SheetJS
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+        // Get the first worksheet
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert to JSON with header row
+        // defval: '' ensures empty cells become empty strings instead of undefined
+        const data = XLSX.utils.sheet_to_json(worksheet, {
+            defval: '',
+            raw: false // This ensures dates and numbers are formatted as strings
+        });
+
+        console.log(`📊 Excel file parsed: ${data.length} rows from sheet "${sheetName}"`);
+
+        // Clean up the data - trim all string values and handle any formatting issues
+        return data.map(row => {
+            const cleanedRow = {};
+            Object.keys(row).forEach(key => {
+                const value = row[key];
+                // Trim strings, keep empty strings as is
+                cleanedRow[key] = typeof value === 'string' ? value.trim() : String(value);
+            });
+            return cleanedRow;
+        });
+
+    } catch (error) {
+        console.error('❌ Error parsing Excel file:', error);
+        return [];
+    }
 }
 
 // ===== Normalize Company Name for Matching =====
@@ -399,6 +441,12 @@ function processData() {
 
         const companyEntries = announcementsData.filter(entry => {
             const entryCompany = (entry.Company || entry.company || '').trim();
+
+            // Skip entries with empty/blank Company names
+            if (!entryCompany) {
+                return false;
+            }
+
             const normalizedEntry = normalizeCompanyName(entryCompany);
 
             // Direct match by normalized symbol or normalized company name
@@ -977,9 +1025,14 @@ function showCategoryDetails(category) {
         let summary = (entry.SUMMARY || entry.summary || '').trim();
         console.log('Raw summary:', summary);
 
+        // Skip entries with completely empty summaries
         if (!summary) {
-            summary = '';
-        } else {
+            console.log('⚠️ Skipping entry with empty summary');
+            return;
+        }
+
+        // Process summary
+        {
             // Remove quotes first
             summary = summary.replace(/^"/, '').replace(/"$/, '');
 
@@ -1126,7 +1179,8 @@ function showCategoryDetails(category) {
             summary = summary.replace(/\n/g, '<br>');
 
             if (!summary) {
-                summary = '';
+                console.log('⚠️ Skipping entry - summary became empty after cleaning');
+                return;
             }
         }
 
